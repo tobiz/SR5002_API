@@ -128,6 +128,7 @@ class actionclass:
     def RS232_Driver(self, arg1):
         print "RS232_Driver called"
         if self.test_mode == "yes":
+            print "RS232_Driver called in test mode"
             rtn = True
         else:    
             ser=serial.Serial(port=self.usb_dev, 
