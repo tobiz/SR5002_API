@@ -121,8 +121,7 @@ class actionclass:
         else:
             self.test_mode == "no"
             print "Running in live mode, use RS232 port"
-                   
-        
+         
         # Finished initialising the RS232 driver
         return True
     
