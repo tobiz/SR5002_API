@@ -108,40 +108,49 @@ class actionclass:
         self.writeTimeout = float(self.writeTimeout)
         print "WriteTimeout is: ", self.writeTimeout
         
-        self.wait_t = config.get("Driver", "WAIT") ;
+        self.wait_t = config.get("Driver", "WAIT") 
         if self.wait_t == "" :
             print "wait_t not specified, use default : " , self.wait_t
             self.wait_t = WAIT
         self.wait_t = float(self.wait_t)
         print "wait_t is: ", self.wait_t
         
+        self.test_mode = config.get("Driver", "TEST")
+        if self.test_mode == "yes":
+            print "Running in test mode, don't use RS232 just print"
+        else:
+            self.test_mode == "no"
+            print "Running in live mode, use RS232 port"
+                   
+        
         # Finished initialising the RS232 driver
         return True
     
     def RS232_Driver(self, arg1):
         print "RS232_Driver called"
-        #ser=serial.Serial(port=self.usb_dev, 
-        #                  baudrate=self.baudrate, 
-        #                  bytesize=8,
-        #                  rtscts=self.rtscts,
-        #                  xonxoff=self.xonxoff, 
-        #                  timeout=self.rdtmout,
-        #                  writeTimeout=self.writeTimeout,
-        #                  )
-        rtn = True
-        print "Open serial"
-        #ser.open() ;
-        print 'Time before write' , time.time() ;
-        #rtn = ser.write(arg1);
-        print 'Time after write' , time.time() ;
-        time.sleep(self.wait_t)   
-        print 'Before read' , time.time() ;
-        #rd = ser.read(size=8) ;    
-        print 'After read' , time.time() ;
-        #print 'read rtn=' , rd 
-        #ser.close()
+        if self.test_mode == "yes":
+            rtn = True
+        else:    
+            ser=serial.Serial(port=self.usb_dev, 
+                              baudrate=self.baudrate, 
+                              bytesize=8,
+                              rtscts=self.rtscts,
+                              xonxoff=self.xonxoff, 
+                              timeout=self.rdtmout,
+                              writeTimeout=self.writeTimeout,
+                              )
+            print "Open serial"
+            ser.open() ;
+            print 'Time before write' , time.time() ;
+            rtn = ser.write(arg1);
+            #print 'Time after write' , time.time() ;
+            time.sleep(self.wait_t)   
+            #print 'Before read' , time.time() ;
+            #rd = ser.read(size=8) ;    
+            #print 'After read' , time.time() ;
+            print 'read rtn=' , rtn 
+            ser.close()
         print "RS232_Driver exit"
-        #return True
         return rtn
     
     def SR5002_cmd(self, arg1): 
