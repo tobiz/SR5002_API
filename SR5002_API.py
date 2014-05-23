@@ -173,21 +173,10 @@ class actionclass:
     
         for i in range (0, nos_params): 
             cmd = '@' + params[i] + '\r'
-            print 'Cmd=' + cmd    
-            #print 'Before write' , time.time() ;
-            #rtn = ser.write(cmd);
-            #print 'After write' , time.time() ;
-            #time.sleep(self.wait_t)   
-            #print 'Before read' , time.time() ;
-            #rd = ser.read(size=8) ;    
-            #print 'After read' , time.time() ;
-            #print 'rtn=' , rtn ;
-            #print 'read rtn=' , rd ;
-            self.RS232_Driver(cmd)
-        
-        #ser.close() 
+            print 'Cmd=' + cmd  
+            rtn = self.RS232_Driver(cmd)
         print "Exit SR5002_cmd"
-        return True
+        return rtn
  
     def SR5002_PWR_off (self):
         return self.SR5002_cmd("PWR:1")
