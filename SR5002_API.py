@@ -174,7 +174,7 @@ class actionclass:
         for i in range (0, nos_params): 
             cmd = '@' + params[i] + '\r'
             print 'Cmd=' + cmd  
-            rtn = self.RS232_Driver(cmd)
+            rtn = self.RS232_Driver(cmd) 
         print "Exit SR5002_cmd"
         return rtn
  
