@@ -43,7 +43,11 @@ RDTMOUT  = 0.5
 WRITETIMEOUT = 0.5
 WAIT = 0.3
 
+ACK = 0x06
+NAK = 0x15
+
 class actionclass:
+    # The following are a few test functions
     def mul(self, arg1, arg2): return arg1 * arg2
     def add(self, arg1, arg2): return arg1 + arg2
     def sub(self, arg1, arg2): return arg1 - arg2
@@ -126,32 +130,59 @@ class actionclass:
         return True
     
     def RS232_Driver(self, arg1):
+        # The driver writes or reads to/from the serial port
+        # If the command is a get status command, eg "@CMD:?" then
+        # it reads the corresponding status from the serial port.
+        # If it's not a get status command then it writes to the 
+        # serial port.
         print "RS232_Driver called"
         if self.test_mode == "yes":
-            print "RS232_Driver called in test mode. Write: " + arg1
-            rtn = True
-        else:    
-            ser=serial.Serial(port=self.usb_dev, 
-                              baudrate=self.baudrate, 
-                              bytesize=8,
-                              rtscts=self.rtscts,
-                              xonxoff=self.xonxoff, 
-                              timeout=self.rdtmout,
-                              writeTimeout=self.writeTimeout,
-                              )
-            print "Open serial"
-            ser.open() ;
-            print 'Time before write' , time.time() ;
-            rtn = ser.write(arg1);
-            #print 'Time after write' , time.time() ;
-            time.sleep(self.wait_t)   
-            #print 'Before read' , time.time() ;
-            #rd = ser.read(size=8) ;    
-            #print 'After read' , time.time() ;
-            print 'read rtn=' , rtn 
+            print "RS232_Driver called in test mode. Command is: " + arg1
+            print "RS232_Driver exit"
+            return True
+           
+        ser=serial.Serial(port=self.usb_dev, 
+                          baudrate=self.baudrate, 
+                          bytesize=8,
+                          rtscts=self.rtscts,
+                          xonxoff=self.xonxoff, 
+                          timeout=self.rdtmout,
+                          writeTimeout=self.writeTimeout,
+                          )
+        print "Open serial"
+        ser.open() 
+        print 'Time after open()' , time.time()
+        # Status request format "@" ; "Status cmd:" ; "?" ; "0xD"
+        # Where "Status cmd:" is 3 char code terminated by ":"
+        # Note, above ";" is a meta character separator
+        if arg1[5] == "?":
+            print "Get status request: ", arg1[4]
+            rd = ser.read() 
+            print 'Time after read' , time.time()
+            print "Read returned: ", res
             ser.close()
-        print "RS232_Driver exit"
-        return rtn
+            return rd
+        # Command request
+        rtn = ser.write(arg1)
+        #print 'Time after write' , time.time() ;
+        time.sleep(self.wait_t)   
+        #print 'Before read' , time.time() ;
+        # Read back 3 bytes
+        rd = ser.read(size=3) 
+        print 'Time after read' , time.time() ;
+        # Should return "@; x06 ; x0D", ie "@; ACK ; CR" 
+        # or "@; x15 ; x0D", ie "@; NAK ; CR"
+        print "Read returned: ", res
+        if rd[1] == ACK:
+            ser.close()
+            return True
+        if rd[1] == NAK:
+            ser.close()
+            return False
+        print 'ACK nor NAK found: ' , rd[1] 
+        ser.close()
+    print "RS232_Driver exit"
+    return True
     
     def SR5002_cmd(self, arg1): 
         # This function sends the supplied string parameter sequence to the
@@ -178,11 +209,17 @@ class actionclass:
         print "Exit SR5002_cmd"
         return rtn
  
+    def SR5002_PWR_toggle (self):
+        return self.SR5002_cmd("PWR:0")
+    
     def SR5002_PWR_off (self):
         return self.SR5002_cmd("PWR:1")
     
     def SR5002_PWR_on (self):
-        return self.SR5002_cmd("PWR:2")
+        return self.SR5002_cmd("PWR:2") 
+    
+    def SR5002_PWR_Global_off (self):
+        return self.SR5002_cmd("PWR:3")  
     
     def SR5002_Audio_Toggle(self):
         return self.SR5002_cmd("AMT:0")
@@ -206,6 +243,12 @@ class actionclass:
             return False
         val = "VMT:0" + str(arg1)
         return self.SR5002_cmd(val)
+    
+    def SR5002_Vol_up_fast (self):
+        return self.SR5002_cmd("VOL:3")
+    
+    def SR5002_Vol_dwn_fast (self):
+        return self.SR5002_cmd("VOL:4")
     
     def SR5002_Bass_up(self):
         return self.SR5002_cmd("TOB:1")
@@ -269,6 +312,39 @@ class actionclass:
     
     def SR5002_SPK_B_on(self):
         return self.SR5002_cmd("SPK:4")
+    
+    def SR5002_Surr_Mode(self, arg1):
+        return self.SR5002_cmd(arg1)
+#
+# Status commands, return status of SR5002 for supplied parameter
+#
+    def SR5002_PWR_Stat(self):
+        stat = self.SR5002_cmd("PWR:?")
+        if stat == "PWR:1":
+            return "OFF"
+        if stat == "PWR:2":
+            return "ON"
+        else:
+            return stat
+    
+    def SR5002_HDMI_Mode(self):
+        stat = self.SR5002_cmd("HAM:?")
+        if stat == "HAM:1":
+            return "ENABLE"
+        if stat == "HAM:2":
+            return "THROUGH"
+        else:
+            return stat
+    
+    def SR5002_SRC_Slct(self):
+        stat = self.SR5002_cmd("SRC:?")
+        # SR5002 returns "SRC:va" where v & a are in the range 0x0-0xF
+        # and v is video source and a is audio source
+        video = stat[4]
+        audio = stat[5]
+        rtn[0] = video
+        rtn[1] = audio
+        return rtn
     
     
     
