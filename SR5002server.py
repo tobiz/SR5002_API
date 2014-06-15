@@ -6,11 +6,9 @@ import Pyro.core
 from Pyro.errors import PyroError, NamingError
 import socket
 
-
-#import RS232mod
 import SR5002_API
 
-###### testclass Pyro object
+###### actionclass Pyro object
 
 class actionclass(Pyro.core.ObjBase, SR5002_API.actionclass):
         pass
@@ -38,8 +36,8 @@ def main():
 
     # connect a new object implementation (first unregister previous one)
     try:
-        # 'RS232' is the name by which our object will be known to the outside world
-       #ns.unregister('RS232')
+        # 'SR5002' is the name by which our object will be known to the outside world
+        #ns.unregister('SR5002')
         ns.unregister('SR5002')
     except NamingError:
         pass

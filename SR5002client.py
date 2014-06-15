@@ -4,6 +4,8 @@
 import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
 
+import SR5002_API
+
 # locate the NS
 locator = Pyro.naming.NameServerLocator()
 print 'Searching Name Server...',
@@ -38,4 +40,10 @@ print SR5002.SR5002_Audio_Mute_on()
 print SR5002.SR5002_Vol_up()
 print SR5002.SR5002_Vol_down()
 print SR5002.SR5002_Vol_Set(10)
+#
+# Test status commands
+#
+print SR5002.SR5002_PWR_Stat()
+print SR5002.SR5002_HDMI_Mode()
+#print SR5002.SR5002_SRC_Slct() # Can't run in test mode as RS232 has to return value
 
