@@ -10,7 +10,10 @@ import SR5002_API
 
 ###### actionclass Pyro object
 
-class actionclass(Pyro.core.ObjBase, SR5002_API.actionclass):
+#class actionclass(Pyro.core.ObjBase, SR5002_API.actionclass):
+class actionclass (Pyro.core.SynchronizedObjBase, SR5002_API.actionclass):
+    # subclassing actionclass from Pyro.core.SynchronizedObjBase all (remote) method calls are 
+    # automatically synchronised for you, because a thread lock object is used for your Pyro object
         pass
     
 
