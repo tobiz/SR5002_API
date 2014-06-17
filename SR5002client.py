@@ -40,6 +40,7 @@ print SR5002.SR5002_Audio_Mute_on()
 print SR5002.SR5002_Vol_up()
 print SR5002.SR5002_Vol_down()
 print SR5002.SR5002_Vol_Set(10)
+#print SR5002.SR5002_Surr_Mode(SURR_MODE_CSII_MUSIC) 
 #
 # Test status commands
 #
