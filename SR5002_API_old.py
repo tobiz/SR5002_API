@@ -32,6 +32,7 @@ import time
 import socket
 import ConfigParser
 import serial
+from Queue import Queue 
 
 # Global variables
 
@@ -88,6 +89,11 @@ class actionclass:
     def hello(self):
         host_IP = ([(s.connect(('8.8.8.8', 80)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1])
         return "Hello from: " + host_IP
+    
+    def __init__(self):
+        # Create a queue for this instance of the class
+        self.Q = Queue(maxsize = 10)
+        
     
     def RS232_init(self, arg1):
         # This reads the config file supplied as a parameter arg1 and
@@ -168,60 +174,70 @@ class actionclass:
         # it reads the corresponding status from the serial port.
         # If it's not a get status command then it writes to the 
         # serial port.
+        # Since the API can be called from several remote machines it
+        # has to take into account that they don't know about each other
+        # ie several could make simultaneous calls on the API/server eg
+        # the shared resource of the RS232 connection
+        self.Q.put(arg1)
+        return RS232_Driver_de_Q()
         
-        print "RS232_Driver called"
-        #with self.lock:
-        #print "Lock aquired: ", self.lock
-        #print "RS232_Driver called"
-        if self.test_mode == "yes":
-            print "RS232_Driver called in test mode. Command is: " + arg1
-            print "RS232_Driver exit"
+        def RS232_Driver_de_Q(self, arg1):
+            while not self.Q.empty():   
+                arg1 = self.Q.get()       
+                print "RS232_Driver called"
+                #with self.lock:
+                #print "Lock aquired: ", self.lock
+                #print "RS232_Driver called"
+                if self.test_mode == "yes":
+                    print "RS232_Driver called in test mode. Command is: " + arg1
+                    print "RS232_Driver exit"
+                    return True
+                   
+                ser=serial.Serial(port=self.usb_dev, 
+                                  baudrate=self.baudrate, 
+                                  bytesize=8,
+                                  rtscts=self.rtscts,
+                                  xonxoff=self.xonxoff, 
+                                  timeout=self.rdtmout,
+                                  writeTimeout=self.writeTimeout,
+                                  )
+                print "Open serial"
+                ser.open() 
+                print 'Time after open()' , time.time()
+                # Status request format "@" ; "Status cmd:" ; "?" ; "0xD"
+                # Where "Status cmd:" is 3 char code terminated by ":"
+                # Note, above ";" is a meta character separator
+                if arg1[5] == "?":
+                    print "Get status request: ", arg1[4]
+                    rd = ser.read() 
+                    print 'Time after read' , time.time()
+                    print "Read returned: ", res
+                    ser.close()
+                    return rd
+                # Command request
+                rtn = ser.write(arg1)
+                #print 'Time after write' , time.time() ;
+                time.sleep(self.wait_t)   
+                #print 'Before read' , time.time() ;
+                # Read back 3 bytes
+                rd = ser.read(size=3) 
+                print 'Time after read' , time.time() ;
+                # Should return "@"; x06 ; x0D, ie "@"; ACK ; CR 
+                # or "@"; x15 ; x0D, ie "@"; NAK ; CR
+                # Where AK & NAK are hex values defined above and CR is Carriage
+                # Return character
+                print "Read returned: ", res
+                if rd[1] == ACK:
+                    ser.close()
+                    return True
+                if rd[1] == NAK:
+                    ser.close()
+                    return False
+                print 'ACK nor NAK found: ' , rd[1] 
+                ser.close()
+                print "RS232_Driver exit"
+                self.Q.task_done()
             return True
-           
-        ser=serial.Serial(port=self.usb_dev, 
-                          baudrate=self.baudrate, 
-                          bytesize=8,
-                          rtscts=self.rtscts,
-                          xonxoff=self.xonxoff, 
-                          timeout=self.rdtmout,
-                          writeTimeout=self.writeTimeout,
-                          )
-        print "Open serial"
-        ser.open() 
-        print 'Time after open()' , time.time()
-        # Status request format "@" ; "Status cmd:" ; "?" ; "0xD"
-        # Where "Status cmd:" is 3 char code terminated by ":"
-        # Note, above ";" is a meta character separator
-        if arg1[5] == "?":
-            print "Get status request: ", arg1[4]
-            rd = ser.read() 
-            print 'Time after read' , time.time()
-            print "Read returned: ", res
-            ser.close()
-            return rd
-        # Command request
-        rtn = ser.write(arg1)
-        #print 'Time after write' , time.time() ;
-        time.sleep(self.wait_t)   
-        #print 'Before read' , time.time() ;
-        # Read back 3 bytes
-        rd = ser.read(size=3) 
-        print 'Time after read' , time.time() ;
-        # Should return "@"; x06 ; x0D, ie "@"; ACK ; CR 
-        # or "@"; x15 ; x0D, ie "@"; NAK ; CR
-        # Where AK & NAK are hex values defined above and CR is Carriage
-        # Return character
-        print "Read returned: ", res
-        if rd[1] == ACK:
-            ser.close()
-            return True
-        if rd[1] == NAK:
-            ser.close()
-            return False
-        print 'ACK nor NAK found: ' , rd[1] 
-        ser.close()
-        print "RS232_Driver exit"
-        return True
 
     def SR5002_connect(self):
         # This creates a unique connection to be used on all calls
