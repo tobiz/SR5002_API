@@ -46,5 +46,5 @@ print SR5002.SR5002_Surr_Mode(SR5002_SURR_MODE_CSII_MUSIC)
 #
 print SR5002_PWR_Stat()
 print SR5002_HDMI_Mode()
-print SR5002_SRC_Slct()
+#print SR5002.SR5002_SRC_Slct() # Can't run in test mode as RS232 has to return value
 
