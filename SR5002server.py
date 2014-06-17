@@ -12,7 +12,7 @@ import SR5002_API
 
 #class actionclass(Pyro.core.ObjBase, SR5002_API.actionclass):
 class actionclass (Pyro.core.SynchronizedObjBase, SR5002_API.actionclass):
-    # subclassing actionclass from Pyro.core.SynchronizedObjBase all (remote) method calls are 
+    # subclassing actionclass from Pyro.core.SynchronizedObjBase all (remote) method calls are
     # automatically synchronised for you, because a thread lock object is used for your Pyro object
         pass
     
@@ -21,7 +21,7 @@ class actionclass (Pyro.core.SynchronizedObjBase, SR5002_API.actionclass):
 ###### main server program
 ######
 def main():
-    # Find the Host IP address and bind to that.  If you don't do this it binds to 127.0.0.1. Note there are limitations on this, 
+    # Find the Host IP address and bind to that. If you don't do this it binds to 127.0.0.1. Note there are limitations on this,
     # eg only works on local lan, doesn't support IPv6 addresses, but for now seems ok
     host_IP = ([(s.connect(('8.8.8.8', 80)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1])
     print "Host IP is: " + host_IP
