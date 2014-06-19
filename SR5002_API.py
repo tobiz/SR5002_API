@@ -32,6 +32,7 @@ import time
 import socket
 import ConfigParser
 import serial
+import re
 
 # Global variables
 
@@ -168,8 +169,17 @@ class actionclass:
         # it reads the corresponding status from the serial port.
         # If it's not a get status command then it writes to the 
         # serial port.
+        def chk_ACK(self, arg1):
+            string = ':'.join(x.encode('hex') for x in arg1)
+            #print "Hex of Read returned is: ", string
+            if string[3:5] == "15":
+                print "NAK returned"
+                return False
+            if string[3:5] == "06":
+                print "ACK returned"
+                return True
         
-        print "RS232_Driver called"
+        print "RS232_Driver called. Arg1 is: ", arg1
         #with self.lock:
         #print "Lock aquired: ", self.lock
         #print "RS232_Driver called"
@@ -181,44 +191,69 @@ class actionclass:
         ser=serial.Serial(port=self.usb_dev, 
                           baudrate=self.baudrate, 
                           bytesize=8,
-                          rtscts=self.rtscts,
-                          xonxoff=self.xonxoff, 
+        #                  rtscts=self.rtscts,
+        #                  xonxoff=self.xonxoff, 
                           timeout=self.rdtmout,
                           writeTimeout=self.writeTimeout,
                           )
-        print "Open serial"
-        ser.open() 
-        print 'Time after open()' , time.time()
+        print "Open serial. Ser is: ", ser
+        rtn = ser.open() 
+        #print 'Time after open()' , time.time()
+        print "ser.open rtns is: ", rtn
         # Status request format "@" ; "Status cmd:" ; "?" ; "0xD"
         # Where "Status cmd:" is 3 char code terminated by ":"
         # Note, above ";" is a meta character separator
+        # Command formatting
+        l = len(arg1)
+        cmd = '%s%s\r'%(arg1[0],arg1[1:l-1])
+        #string = ':'.join(x.encode('hex') for x in cmd)
+        #i = 0
+        #for x in cmd:
+        #    print "Char: " + str(i) + "is: " + x
+        #    i = i + 1
+        #print "Nos chars in cmd is: ", i
+        #print "Hex of cmd is: ", string
+        print "cmd is: "
+        print cmd
         if arg1[5] == "?":
-            print "Get status request: ", arg1[4]
-            rd = ser.read() 
-            print 'Time after read' , time.time()
-            print "Read returned: ", res
+            print "Get status request: ", arg1
+            rtn = ser.write(cmd)
+            rd = ser.read(len(arg1)) 
+            #print 'Time after read' , time.time()
+            string = ':'.join(x.encode('hex') for x in rd)
+            #print "Hex of Read returned is: ", string
+            print "Read returned: ", rd
+            if not chk_AK(rd):
+                pass
             ser.close()
-            return rd
-        # Command request
-        rtn = ser.write(arg1)
-        #print 'Time after write' , time.time() ;
+            return True
+            
+            if string[3:5] == "15":
+                print "NAK returned"
+            ser.close()
+            print "RS232_Driver exit"
+            return True
+        rtn = ser.write(cmd)
+        print "ser.write() rtns: ", rtn
+        print 'Time after write' , time.time() 
         time.sleep(self.wait_t)   
         #print 'Before read' , time.time() ;
-        # Read back 3 bytes
-        rd = ser.read(size=3) 
-        print 'Time after read' , time.time() ;
+        # Read back n bytes
+        #rd = ser.read(size=rtn) 
+        #print 'Time after read' , time.time()
+        #print "read returned: ", rd 
         # Should return "@"; x06 ; x0D, ie "@"; ACK ; CR 
         # or "@"; x15 ; x0D, ie "@"; NAK ; CR
         # Where AK & NAK are hex values defined above and CR is Carriage
         # Return character
-        print "Read returned: ", res
-        if rd[1] == ACK:
-            ser.close()
-            return True
-        if rd[1] == NAK:
-            ser.close()
-            return False
-        print 'ACK nor NAK found: ' , rd[1] 
+        #print "Read returned: ", res
+        #if rd[1] == ACK:
+        #    ser.close()
+        #    return True
+        #if rd[1] == NAK:
+        #    ser.close()
+        #    return False
+        #print 'ACK nor NAK found: ' , rd[1] 
         ser.close()
         print "RS232_Driver exit"
         return True
@@ -249,7 +284,7 @@ class actionclass:
     
         for i in range (0, nos_params): 
             cmd = '@' + params[i] + '\r'
-            print 'Cmd=' + cmd  
+            print 'Cmd in SR5002_cmd is: ' + cmd  
             rtn = self.RS232_Driver(cmd) 
         print "Exit SR5002_cmd"
         return rtn
