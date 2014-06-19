@@ -33,6 +33,7 @@ import socket
 import ConfigParser
 import serial
 import re
+from subprocess import call
 
 # Global variables
 
@@ -159,6 +160,31 @@ class actionclass:
         else:
             self.test_mode == "no"
             print "Running in live mode, use RS232 port"
+        
+        # Section handling keyboard/mouse mapping to HDMI port
+        # screen output connections.  This needs a change in SR5002_SRC_x
+        # to switch keyboard & mouse input to the corresponding IP address,
+        # ie the server connected to the HDMI port
+        for i in [1, 2, 3]:
+            self.hdmi_port[i] = config.get("Keyboard", "HDMI" + str(i))
+            if self.hdmi_port[i] == "":
+                print "No IP defined for HDMI port: ", i
+            else:
+                print "HDMI port: ", str(i), "connected to IP: ", self.hdmi_port[i]
+                
+        self.keybd = config.get("keyboard", "KEYBOARD")
+        if self.keybd == "":
+            print "Config error, no keyboard event dev defined, exit"
+            # Don't fail for now
+            #return False
+        
+        self.mouse = config.get("keyboard", "MOUSE")
+        if self.mouse == "":
+            print "Config error, no mouse event dev defined,exit"
+            # Don't fail for now
+            #return False
+                
+            
          
         # Finished initialising the RS232 driver
         return True
@@ -264,6 +290,24 @@ class actionclass:
         # Not thought this through yet!
         return
     
+    def switch_keybd(self, arg1):
+        # Sends keyboard and mouse inputs to the IP address specified in arg1
+        # by calling a shell command like:
+        # $ cat /dev/input/by-path/platform-i8042-serio-0-event-kbd | nc <IP> 4444
+        # and
+        # $ cat /dev/input/by-path/platform-i8042-serio-0-event-mouse | nc <IP> 4445
+        # The client, recipient machine runs:
+        # $ nc -l -p 4444 > /dev/input/by-path/platform-i8042-serio-0-event-kbd etc
+        # to receive the keyboard input and process them itself.
+        # Note watch out for the nc params, -l -p is different on different sys.
+        cmd1 = "cat %s | nc %s 4444"%(self.keybd, arg1)
+        cmd2 = "cat %s | nc %s 4445"%(self.mouse, arg1)
+        print "Remote keyboard cmd is: ", cmd1
+        print "Remote mouse cmd is: ", cmd2
+        call([cmd1])
+        call([cmd2])
+        return True
+    
     def SR5002_cmd(self, arg1): 
         # This function sends the supplied string parameter sequence to the
         # SR5002 via the RS232 port command by command
@@ -343,12 +387,15 @@ class actionclass:
         return self.SR5002_cmd("TOT:2") 
     
     def SR5002_SRC_TV(self):
+        switch_keybd(self.hdmi_port[1])
         return self.SR5002_cmd("SRC:1")
     
     def SR5002_SRC_DVD(self):
+        switch_keybd(self.hdmi_port[2])
         return self.SR5002_cmd("SRC:2")
     
     def SR5002_SRC_VCR1(self):
+        switch_keybd(self.hdmi_port[3])
         return self.SR5002_cmd("SRC:3")
     
     def SR5002_SRC_VCR2(self):
