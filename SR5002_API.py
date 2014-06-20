@@ -50,6 +50,11 @@ WAIT = 0.3
 ACK = 0x06
 NAK = 0x15
 
+#Global name
+hdmi_port= ["", "", "", ""]
+keybd = ""
+mouse = ""
+
 SURR_MODE_AUTO              = "SUR:00"
 SURR_MODE_STEREO            = "SUR:01"
 SURR_MODE_DOLBY             = "SUR:02"
@@ -161,28 +166,43 @@ class actionclass:
             self.test_mode == "no"
             print "Running in live mode, use RS232 port"
         
+        print "End of RS232 Device Section"
         # Section handling keyboard/mouse mapping to HDMI port
         # screen output connections.  This needs a change in SR5002_SRC_x
         # to switch keyboard & mouse input to the corresponding IP address,
         # ie the server connected to the HDMI port
-        for i in [1, 2, 3]:
-            self.hdmi_port[i] = config.get("Keyboard", "HDMI" + str(i))
-            if self.hdmi_port[i] == "":
-                print "No IP defined for HDMI port: ", i
+        
+        #self.hdmi_port1 = config.get("Keyboard", "HDMI1")
+        #if self.hdmi_port1 == "":
+        #    print "No IP defined for HDMI port1: "
+        #else:
+        #    print "HDMI port1: ", "connected to IP: ", self.hdmi_port1
+        self.x = 0   
+        for self.i in [0, 1, 2]:
+            self.x = self.x + 1 
+            print "i is: ", self.i
+            print "x is: ", self.x
+            hdmi_port[self.x] = config.get("Keyboard", "HDMI" + str(self.x))
+            if hdmi_port[self.x] == "":
+                print "No IP defined for HDMI port: ", self.x
             else:
-                print "HDMI port: ", str(i), "connected to IP: ", self.hdmi_port[i]
+                print "HDMI port: ", str(self.x), "connected to IP: ", hdmi_port[self.x]
                 
-        self.keybd = config.get("keyboard", "KEYBOARD")
-        if self.keybd == "":
+        global keybd 
+        keybd = config.get("Keyboard", "KEYBOARD")
+        if keybd == "":
             print "Config error, no keyboard event dev defined, exit"
             # Don't fail for now
             #return False
+        print "Keyboard dev is: ", keybd
         
-        self.mouse = config.get("keyboard", "MOUSE")
-        if self.mouse == "":
+        global mouse 
+        mouse = config.get("Keyboard", "MOUSE")
+        if mouse == "":
             print "Config error, no mouse event dev defined,exit"
             # Don't fail for now
             #return False
+        print "Mouse dev is: ", mouse
                 
             
          
@@ -300,12 +320,13 @@ class actionclass:
         # $ nc -l -p 4444 > /dev/input/by-path/platform-i8042-serio-0-event-kbd etc
         # to receive the keyboard input and process them itself.
         # Note watch out for the nc params, -l -p is different on different sys.
-        cmd1 = "cat %s | nc %s 4444"%(self.keybd, arg1)
-        cmd2 = "cat %s | nc %s 4445"%(self.mouse, arg1)
+        print "switch_keybd called with: ", arg1
+        cmd1 = "cat %s | nc %s 4444"%(keybd, arg1)
+        cmd2 = "cat %s | nc %s 4445"%(mouse, arg1)
         print "Remote keyboard cmd is: ", cmd1
         print "Remote mouse cmd is: ", cmd2
-        call([cmd1])
-        call([cmd2])
+        #call([cmd1])
+        #call([cmd2])
         return True
     
     def SR5002_cmd(self, arg1): 
@@ -387,15 +408,16 @@ class actionclass:
         return self.SR5002_cmd("TOT:2") 
     
     def SR5002_SRC_TV(self):
-        switch_keybd(self.hdmi_port[1])
+        print "SR5002_SRC_TV() called"
+        self.switch_keybd(hdmi_port[1])
         return self.SR5002_cmd("SRC:1")
     
     def SR5002_SRC_DVD(self):
-        switch_keybd(self.hdmi_port[2])
+        self.switch_keybd(hdmi_port[2])
         return self.SR5002_cmd("SRC:2")
     
     def SR5002_SRC_VCR1(self):
-        switch_keybd(self.hdmi_port[3])
+        self.switch_keybd(hdmi_port[3])
         return self.SR5002_cmd("SRC:3")
     
     def SR5002_SRC_VCR2(self):
