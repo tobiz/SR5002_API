@@ -34,6 +34,7 @@ import ConfigParser
 import serial
 import re
 from subprocess import call
+import os
 
 # Global variables
 
@@ -99,6 +100,13 @@ class actionclass:
     def RS232_init(self, arg1):
         # This reads the config file supplied as a parameter arg1 and
         # uses the values to initialise the server
+        
+        def find_dev(self, arg1):
+            for self.item in os.listdir("/dev/input/by-path"):
+                if self.find(arg1) > -1:
+                    return self.item
+            return False
+                
         CONFIG_FILE = arg1       
         try:
             open(CONFIG_FILE, 'r');
@@ -196,6 +204,21 @@ class actionclass:
             #return False
         print "Keyboard dev is: ", keybd
         
+        global keybd_dev 
+        keybd_dev = self.find_dev("event-kbd")
+        if not keybd_dev:
+            print "Keyboard event device not found"
+            return
+        print "Keyboard event dev is: ", keybd_dev
+        
+        global mouse_dev 
+        mouse_dev = self.find_dev("event-mouse")
+        if not keybd_dev:
+            print "Mouse event device not found"
+            return
+        print "Mouse event dev is: ", mouse_dev
+        
+            
         global mouse 
         mouse = config.get("Keyboard", "MOUSE")
         if mouse == "":
@@ -215,15 +238,7 @@ class actionclass:
         # it reads the corresponding status from the serial port.
         # If it's not a get status command then it writes to the 
         # serial port.
-        def chk_ACK(self, arg1):
-            string = ':'.join(x.encode('hex') for x in arg1)
-            #print "Hex of Read returned is: ", string
-            if string[3:5] == "15":
-                print "NAK returned"
-                return False
-            if string[3:5] == "06":
-                print "ACK returned"
-                return True
+        
         
         print "RS232_Driver called. Arg1 is: ", arg1
         #with self.lock:
@@ -269,7 +284,7 @@ class actionclass:
             string = ':'.join(x.encode('hex') for x in rd)
             #print "Hex of Read returned is: ", string
             print "Read returned: ", rd
-            if not chk_AK(rd):
+            if not self.chk_ACK(rd):
                 pass
             ser.close()
             return True
@@ -303,6 +318,16 @@ class actionclass:
         ser.close()
         print "RS232_Driver exit"
         return True
+    
+    def chk_ACK(self, arg1):
+            string = ':'.join(x.encode('hex') for x in arg1)
+            #print "Hex of Read returned is: ", string
+            if string[3:5] == "15":
+                print "NAK returned"
+                return False
+            if string[3:5] == "06":
+                print "ACK returned"
+                return True
 
     def SR5002_connect(self):
         # This creates a unique connection to be used on all calls

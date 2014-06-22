@@ -48,8 +48,12 @@ print SR5002.SR5002_PWR_Stat()
 #
 # Test status commands
 #
-print SR5002.SR5002_PWR_Stat()
+#print SR5002.SR5002_PWR_Stat()
 #print SR5002.SR5002_HDMI_Mode()
 #print SR5002.SR5002_SRC_Slct() # Can't run in test mode as RS232 has to return value
 #print SR5002.SR5002_cmd("@SLP:1")
+
+
+#print SR5002.SR5002_SRC_TV()
+print SR5002.SR5002_SRC_DVD()
 
