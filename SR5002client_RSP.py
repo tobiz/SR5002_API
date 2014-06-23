@@ -33,11 +33,11 @@ print SR5002.hello()
 print SR5002.RS232_init("/home/pi/workspace/SR5002_API/src/SR5002_RS232.conf")
 #print SR5002.SR5002_cmd("ABC DEF GHI")
 #print SR5002.SR5002_PWR_off()
-print SR5002.SR5002_PWR_Stat()
+#print SR5002.SR5002_PWR_Stat()
 #print SR5002.SR5002_PWR_on()
 #print SR5002.SR5002_PWR_Stat()
-print SR5002.SR5002_PWR_off()
-print SR5002.SR5002_PWR_Stat()
+#print SR5002.SR5002_PWR_off()
+#print SR5002.SR5002_PWR_Stat()
 #print SR5002.SR5002_Audio_Toggle()
 #print SR5002.SR5002_Audio_Mute_off()
 #print SR5002.SR5002_Audio_Mute_on()
@@ -54,6 +54,7 @@ print SR5002.SR5002_PWR_Stat()
 #print SR5002.SR5002_cmd("@SLP:1")
 
 
-#print SR5002.SR5002_SRC_TV()
+
+print SR5002.SR5002_SRC_TV()
 print SR5002.SR5002_SRC_DVD()
 

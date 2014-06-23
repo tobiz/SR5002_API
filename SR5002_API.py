@@ -35,6 +35,7 @@ import serial
 import re
 from subprocess import call
 import os
+import string
 
 # Global variables
 
@@ -97,15 +98,20 @@ class actionclass:
         host_IP = ([(s.connect(('8.8.8.8', 80)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1])
         return "Hello from: " + host_IP
     
+    def find_dev(self, arg1):
+        print "find_dev called"  
+        for self.item in os.listdir("/dev/input/by-path"):
+            if self.item.find(arg1) > -1:
+                print "Exit find_dev value returned is: ", self.item
+                return self.item
+        print "Exit find_dev return False"
+        return False
+    
     def RS232_init(self, arg1):
         # This reads the config file supplied as a parameter arg1 and
         # uses the values to initialise the server
         
-        def find_dev(self, arg1):
-            for self.item in os.listdir("/dev/input/by-path"):
-                if self.find(arg1) > -1:
-                    return self.item
-            return False
+        
                 
         CONFIG_FILE = arg1       
         try:
@@ -180,11 +186,7 @@ class actionclass:
         # to switch keyboard & mouse input to the corresponding IP address,
         # ie the server connected to the HDMI port
         
-        #self.hdmi_port1 = config.get("Keyboard", "HDMI1")
-        #if self.hdmi_port1 == "":
-        #    print "No IP defined for HDMI port1: "
-        #else:
-        #    print "HDMI port1: ", "connected to IP: ", self.hdmi_port1
+        print "Start Keyboard and Mouse config"
         self.x = 0   
         for self.i in [0, 1, 2]:
             self.x = self.x + 1 
@@ -194,40 +196,22 @@ class actionclass:
             if hdmi_port[self.x] == "":
                 print "No IP defined for HDMI port: ", self.x
             else:
-                print "HDMI port: ", str(self.x), "connected to IP: ", hdmi_port[self.x]
-                
-        global keybd 
-        keybd = config.get("Keyboard", "KEYBOARD")
-        if keybd == "":
-            print "Config error, no keyboard event dev defined, exit"
-            # Don't fail for now
-            #return False
-        print "Keyboard dev is: ", keybd
+                print "HDMI port : ", str(self.x), "connected to IP: ", hdmi_port[self.x]
+                            
         
         global keybd_dev 
         keybd_dev = self.find_dev("event-kbd")
         if not keybd_dev:
             print "Keyboard event device not found"
-            return
-        print "Keyboard event dev is: ", keybd_dev
-        
+            return False
+        print "Keyboard dev is: ", keybd_dev
+             
         global mouse_dev 
         mouse_dev = self.find_dev("event-mouse")
         if not keybd_dev:
             print "Mouse event device not found"
-            return
+            return False
         print "Mouse event dev is: ", mouse_dev
-        
-            
-        global mouse 
-        mouse = config.get("Keyboard", "MOUSE")
-        if mouse == "":
-            print "Config error, no mouse event dev defined,exit"
-            # Don't fail for now
-            #return False
-        print "Mouse dev is: ", mouse
-                
-            
          
         # Finished initialising the RS232 driver
         return True
@@ -328,13 +312,7 @@ class actionclass:
             if string[3:5] == "06":
                 print "ACK returned"
                 return True
-
-    def SR5002_connect(self):
-        # This creates a unique connection to be used on all calls
-        # so as to 'lock' the RS232 port for each connection
-        # Not thought this through yet!
-        return
-    
+   
     def switch_keybd(self, arg1):
         # Sends keyboard and mouse inputs to the IP address specified in arg1
         # by calling a shell command like:
@@ -346,8 +324,8 @@ class actionclass:
         # to receive the keyboard input and process them itself.
         # Note watch out for the nc params, -l -p is different on different sys.
         print "switch_keybd called with: ", arg1
-        cmd1 = "cat %s | nc %s 4444"%(keybd, arg1)
-        cmd2 = "cat %s | nc %s 4445"%(mouse, arg1)
+        cmd1 = "cat %s | nc %s 4444"%(keybd_dev, arg1)
+        cmd2 = "cat %s | nc %s 4445"%(mouse_dev, arg1)
         print "Remote keyboard cmd is: ", cmd1
         print "Remote mouse cmd is: ", cmd2
         #call([cmd1])
