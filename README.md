@@ -21,3 +21,5 @@ using SR5002_cmd or call each API function separately.
 
 To be done
 1 Add error handling
+
+This branch is designed to work with Pyro4, Pyro4 is different to Pyro3 hence some changes required
